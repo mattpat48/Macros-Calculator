@@ -24,6 +24,7 @@ class ConsumedEntry {
   double get totalUnsaturated => (food.unsaturatedFats * grams) / 100;
   double get totalCarbs => (food.carbs * grams) / 100;
   double get totalSugars => (food.sugars * grams) / 100;
+  double get totalFibers => (food.fibers * grams) / 100;
 
   Map<String, dynamic> toJson() => {
         'id': id,

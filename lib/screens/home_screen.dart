@@ -81,6 +81,10 @@ class HomeScreen extends StatelessWidget {
             if (entries.isEmpty) return <Widget>[];
 
             final double mealKcal = entries.fold(0, (sum, e) => sum + e.totalKcal);
+            final double mealProteins = entries.fold(0, (sum, e) => sum + e.totalProteins);
+            final double mealCarbs = entries.fold(0, (sum, e) => sum + e.totalCarbs);
+            final double mealFats = entries.fold(0, (sum, e) => sum + e.totalFats);
+            final double mealFibers = entries.fold(0, (sum, e) => sum + e.totalFibers);
 
             return [
               Card(
@@ -95,12 +99,12 @@ class HomeScreen extends StatelessWidget {
                     child: Icon(_getMealIcon(type), color: _getMealColor(type)),
                   ),
                   title: Text(type.name.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  subtitle: Text('${mealKcal.toStringAsFixed(0)} kcal', style: TextStyle(color: Colors.grey[600])),
+                  subtitle: Text('${mealKcal.toStringAsFixed(0)} kcal, ${mealProteins.toStringAsFixed(1)}g P, ${mealCarbs.toStringAsFixed(1)}g C, ${mealFats.toStringAsFixed(1)}g F, ${mealFibers.toStringAsFixed(1)}g FIB'),
                   children: entries.map((entry) => ListTile(
                     dense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                     title: Text(entry.food.name),
-                    subtitle: Text('${entry.grams.toStringAsFixed(0)}g  •  ${entry.totalKcal.toStringAsFixed(0)} kcal'),
+                    subtitle: Text('${entry.grams.toStringAsFixed(0)}g  •  ${entry.totalKcal.toStringAsFixed(0)} kcal, ${entry.totalProteins.toStringAsFixed(1)} g P, ${entry.totalCarbs.toStringAsFixed(1)}g C, ${entry.totalFats.toStringAsFixed(1)}g F'),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
                       onPressed: () => context.read<AppState>().removeEntry(entry.id),
@@ -149,6 +153,7 @@ class HomeScreen extends StatelessWidget {
                 _buildMacroItem('Proteine', state.currentProteins, state.targetProteins, Colors.redAccent),
                 _buildMacroItem('Carboidrati', state.currentCarbs, state.targetCarbs, Colors.blueAccent),
                 _buildMacroItem('Grassi', state.currentFats, state.targetFats, Colors.orangeAccent),
+                _buildMacroItem('Fibre', state.currentFibers, state.targetFibers, Colors.green),
               ],
             ),
           ],
@@ -235,12 +240,15 @@ class _AddMealSheetState extends State<AddMealSheet> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final sortedFoods = List<Food>.from(state.foods)
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 16, right: 16, top: 16),
-      child: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.75,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -251,7 +259,7 @@ class _AddMealSheetState extends State<AddMealSheet> {
               ],
             ),
             const Divider(),
-            Expanded(
+            Flexible(
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,7 +288,7 @@ class _AddMealSheetState extends State<AddMealSheet> {
                                 hint: const Text('Alimento'),
                                 value: row['food'],
                                 decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 10)),
-                                items: state.foods.map((f) => DropdownMenuItem(value: f, child: Text(f.name, overflow: TextOverflow.ellipsis))).toList(),
+                                items: sortedFoods.map((f) => DropdownMenuItem(value: f, child: Text(f.name, overflow: TextOverflow.ellipsis))).toList(),
                                 onChanged: (val) => setState(() {
                                   row['food'] = val;
                                   if (val != null && val.isDish) {
@@ -305,14 +313,18 @@ class _AddMealSheetState extends State<AddMealSheet> {
                             IconButton(
                               icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
                               onPressed: () {
-                                if (entryRows.length > 1) setState(() => entryRows.removeAt(idx));
-                                else setState(() { row['food'] = null; row['gramsCtrl'].clear(); });
+                                if (entryRows.length > 1) {
+                                  setState(() => entryRows.removeAt(idx));
+                                }
+                                else {
+                                  setState(() { row['food'] = null; row['gramsCtrl'].clear(); });
+                                }
                               },
                             ),
                           ],
                         ),
                       );
-                    }).toList(),
+                    }),
                     TextButton.icon(
                       icon: const Icon(Icons.add_circle_outline),
                       label: const Text('Aggiungi altro ingrediente'),

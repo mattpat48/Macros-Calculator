@@ -13,6 +13,7 @@ class AppState extends ChangeNotifier {
   double targetProteins = 150;
   double targetFats = 70;
   double targetCarbs = 250;
+  double targetFibers = 30;
 
   List<Food> get foods => _foods;
   
@@ -35,6 +36,7 @@ class AppState extends ChangeNotifier {
   double get currentProteins => currentLog.fold(0, (sum, item) => sum + item.totalProteins);
   double get currentFats => currentLog.fold(0, (sum, item) => sum + item.totalFats);
   double get currentCarbs => currentLog.fold(0, (sum, item) => sum + item.totalCarbs);
+  double get currentFibers => currentLog.fold(0, (sum, item) => sum + item.totalFibers);
 
   void changeDate(DateTime date) {
     _selectedDate = date;

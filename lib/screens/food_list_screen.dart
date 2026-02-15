@@ -128,12 +128,12 @@ class FoodListScreen extends StatelessWidget {
     );
   }
 
-  void _showAddSimpleFoodSheet(BuildContext context) {
+  void _showAddSimpleFoodSheet(BuildContext context, {Food? toAdd}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => const AddSimpleFoodSheet(),
+      builder: (ctx) => AddSimpleFoodSheet(toAdd: toAdd),
     );
   }
 
@@ -148,7 +148,9 @@ class FoodListScreen extends StatelessWidget {
 }
 
 class AddSimpleFoodSheet extends StatefulWidget {
-  const AddSimpleFoodSheet({super.key});
+  final Food? toAdd;
+
+  const AddSimpleFoodSheet({super.key, this.toAdd});
 
   @override
   State<AddSimpleFoodSheet> createState() => _AddSimpleFoodSheetState();
@@ -167,6 +169,23 @@ class _AddSimpleFoodSheetState extends State<AddSimpleFoodSheet> {
   final fiberCtrl = TextEditingController();
   FoodCategory selectedCategory = FoodCategory.altro;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.toAdd != null) {
+      nameCtrl.text = widget.toAdd!.name;
+      kcalCtrl.text = widget.toAdd!.kcal.toStringAsFixed(0);
+      protCtrl.text = widget.toAdd!.proteins.toStringAsFixed(1);
+      fatCtrl.text = widget.toAdd!.fats.toStringAsFixed(1);
+      satFatCtrl.text = widget.toAdd!.saturatedFats.toStringAsFixed(1);
+      unsatFatCtrl.text = widget.toAdd!.unsaturatedFats.toStringAsFixed(1);
+      carbCtrl.text = widget.toAdd!.carbs.toStringAsFixed(1);
+      sugarCtrl.text = widget.toAdd!.sugars.toStringAsFixed(1);
+      fiberCtrl.text = widget.toAdd!.fibers.toStringAsFixed(1);
+      selectedCategory = widget.toAdd!.category;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -287,30 +306,38 @@ class _AddSimpleFoodSheetState extends State<AddSimpleFoodSheet> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['status'] == 1) {
+        if (data['status'] == 1 && data['product'] != null) {
           final product = data['product'];
-          final nutriments = product['nutriments'];
+          final nutriments = product['nutriments'] as Map<String, dynamic>?;
 
-          setState(() {
-            nameCtrl.text = product['product_name'] ?? '';
-            kcalCtrl.text = (nutriments['energy-kcal_100g'] ?? 0).toString();
-            protCtrl.text = (nutriments['proteins_100g'] ?? 0).toString();
-            fatCtrl.text = (nutriments['fat_100g'] ?? 0).toString();
-            satFatCtrl.text = (nutriments['saturated-fat_100g'] ?? 0).toString();
-            carbCtrl.text = (nutriments['carbohydrates_100g'] ?? 0).toString();
-            sugarCtrl.text = (nutriments['sugars_100g'] ?? 0).toString();
-            fiberCtrl.text = (nutriments['fiber_100g'] ?? 0).toString();
-            // Calcolo approssimativo insaturi se non presenti
-            double fat = double.tryParse(fatCtrl.text) ?? 0;
-            double sat = double.tryParse(satFatCtrl.text) ?? 0;
-            unsatFatCtrl.text = (fat - sat).clamp(0, fat).toStringAsFixed(1);
-          });
+          if (mounted) {
+            setState(() {
+              nameCtrl.text = product['product_name'] ?? 'Alimento Scansionato';
+              
+              if (nutriments != null) {
+                kcalCtrl.text = (nutriments['energy-kcal_100g'] ?? 0).toString();
+                protCtrl.text = (nutriments['proteins_100g'] ?? 0).toString();
+                fatCtrl.text = (nutriments['fat_100g'] ?? 0).toString();
+                satFatCtrl.text = (nutriments['saturated-fat_100g'] ?? 0).toString();
+                carbCtrl.text = (nutriments['carbohydrates_100g'] ?? 0).toString();
+                sugarCtrl.text = (nutriments['sugars_100g'] ?? 0).toString();
+                fiberCtrl.text = (nutriments['fiber_100g'] ?? 0).toString();
+                
+                // Calcolo approssimativo insaturi se non presenti
+                double fat = double.tryParse(fatCtrl.text) ?? 0;
+                double sat = double.tryParse(satFatCtrl.text) ?? 0;
+                unsatFatCtrl.text = (fat - sat).clamp(0, fat).toStringAsFixed(1);
+              }
+            });
+          }
         } else {
           if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Prodotto non trovato.')));
         }
+      } else {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Errore del server.')));
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Errore di connessione.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Errore durante la scansione.')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
