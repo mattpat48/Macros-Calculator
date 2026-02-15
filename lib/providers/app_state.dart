@@ -17,6 +17,8 @@ class AppState extends ChangeNotifier {
   List<Food> get foods => _foods;
   
   // Filtra i log per la data selezionata
+  List<ConsumedEntry> get allLogs => _allLogs;
+
   List<ConsumedEntry> get currentLog => _allLogs.where((e) => 
     e.date.year == _selectedDate.year && 
     e.date.month == _selectedDate.month && 
