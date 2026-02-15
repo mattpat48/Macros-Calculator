@@ -239,13 +239,13 @@ class _AddSimpleFoodSheetState extends State<AddSimpleFoodSheet> {
                           Row(children: [
                             Expanded(child: _buildNumField(protCtrl, 'Proteine', Icons.fitness_center)),
                             const SizedBox(width: 10),
-                            Expanded(child: _buildNumField(fatCtrl, 'Grassi', Icons.opacity)),
+                            Expanded(child: _buildNumField(fiberCtrl, 'Fibre', Icons.opacity)),
                           ]),
                           const SizedBox(height: 15),
                           Row(children: [
-                            Expanded(child: _buildNumField(satFatCtrl, 'Saturi', null)),
+                            Expanded(child: _buildNumField(fatCtrl, 'Grassi', Icons.local_florist)),
                             const SizedBox(width: 10),
-                            Expanded(child: _buildNumField(unsatFatCtrl, 'Insaturi', null)),
+                            Expanded(child: _buildNumField(satFatCtrl, 'di cui saturi', null)),
                           ]),
                           const SizedBox(height: 15),
                           Row(children: [
@@ -253,8 +253,6 @@ class _AddSimpleFoodSheetState extends State<AddSimpleFoodSheet> {
                             const SizedBox(width: 10),
                             Expanded(child: _buildNumField(sugarCtrl, 'Zuccheri', null)),
                           ]),
-                          const SizedBox(height: 15),
-                          _buildNumField(fiberCtrl, 'Fibre', Icons.grass),
                           const SizedBox(height: 20),
                           SizedBox(
                             width: double.infinity,
@@ -513,8 +511,15 @@ class _AddDishSheetState extends State<AddDishSheet> {
   }
 }
 
-class SimpleScannerScreen extends StatelessWidget {
+class SimpleScannerScreen extends StatefulWidget {
   const SimpleScannerScreen({super.key});
+
+  @override
+  State<SimpleScannerScreen> createState() => _SimpleScannerScreenState();
+}
+
+class _SimpleScannerScreenState extends State<SimpleScannerScreen> {
+  bool _isScanned = false;
 
   @override
   Widget build(BuildContext context) {
@@ -522,9 +527,11 @@ class SimpleScannerScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Inquadra Barcode')),
       body: MobileScanner(
         onDetect: (capture) {
+          if (_isScanned) return;
           final List<Barcode> barcodes = capture.barcodes;
           for (final barcode in barcodes) {
             if (barcode.rawValue != null) {
+              setState(() => _isScanned = true);
               Navigator.pop(context, barcode.rawValue);
               return; // Torna al primo codice trovato
             }
